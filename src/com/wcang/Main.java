@@ -1,6 +1,8 @@
 package com.wcang;
 
 
+import java.util.concurrent.CountDownLatch;
+
 public class Main {
     private static int  counter = 0;
 
@@ -106,9 +108,59 @@ public class Main {
         }
     }
 
+    /**
+     * bad example where exceptions will be thrown when wait and notify are called. This
+     * is because the intrinsic lock is hold on main object instead of runnable
+     * objects, while wait and notify are called on runnable objects.
+     */
+    private static void exception_wait_notify() {
+        Main main = new Main();
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (main) {
+                    System.out.println("Before wait");
+                    try {
+                        wait();
+                    } catch (InterruptedException exc) {
+                        System.err.println("Exception on wait: " + exc.getLocalizedMessage());
+                    }
+                    System.out.println("After wait");
+                }
+            }
+        });
+
+        Thread t2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (main) {
+                    System.out.println("Before notify");
+                    try {
+                        Thread.sleep(1000);
+                        notify();
+                    } catch (InterruptedException exc) {
+                        System.err.println("Exception on sleep: " + exc.getLocalizedMessage());
+                    }
+                    System.out.println("After notify");
+                }
+            }
+        });
+        t1.start();
+        t2.start();
+
+
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException exc) {
+            System.err.println("indefinite_wait interrupted: " + exc.getLocalizedMessage());
+        }
+    }
+
 
     public static void main(String[] args) {
         faulty_synchronization_loop();
         working_synchronization_loop();
+        exception_wait_notify();
     }
 }
