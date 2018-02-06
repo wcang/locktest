@@ -63,12 +63,14 @@ public class Main {
         System.out.println("working synchronization");
 
         for (i = 0; i < 10000; i++) {
+            CountDownLatch doneSignal = new CountDownLatch(2);
             Thread t1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     synchronized (main) {
                         counter--;
                     }
+                    doneSignal.countDown();
                 }
             });
 
@@ -78,6 +80,7 @@ public class Main {
                     synchronized (main) {
                         counter++;
                     }
+                    doneSignal.countDown();
                 }
             });
 
@@ -85,8 +88,7 @@ public class Main {
             t2.start();
 
             try {
-                t1.join();
-                t2.join();
+                doneSignal.await();
             } catch (InterruptedException e) {
                 System.err.println("Threads waiting interrupted " + e.getLocalizedMessage());
             }
