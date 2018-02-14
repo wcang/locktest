@@ -158,9 +158,31 @@ public class Main {
     }
 
 
+    /* example to show case that lock in Java is re-entrant. Once a lock is hold by a thread, subsequent
+       monitor lock will be acquired by the same thread without getting deadlocked
+     */
+    private static synchronized void outerlock() {
+        System.out.println("Outer lock");
+        innerlock();
+    }
+
+    private static synchronized  void innerlock() {
+        System.out.println("Inner lock");
+    }
+
+
     public static void main(String[] args) {
         faulty_synchronization_loop();
         working_synchronization_loop();
+        Thread reentrant = new Thread(Main::outerlock);
+        reentrant.start();
+
+        try {
+            reentrant.join();
+        } catch (InterruptedException e) {
+            System.err.println("Error waiting for re-entrant thread: " + e.getLocalizedMessage());
+        }
+
         exception_wait_notify();
     }
 }
